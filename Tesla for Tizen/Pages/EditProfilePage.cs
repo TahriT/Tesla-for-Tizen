@@ -57,11 +57,13 @@ namespace TeslaTizen.Pages
             listView.ItemTapped += async (sender, e) =>
             {
                 var binder = (VehicleAction)e.Item;
-                await binder.Type.CustomizeOrReturn(profile, binder, Navigation, profileService);
+                if (binder.Type.IsRequired())
+                {
+                    // if the action is required you can't edit or delete it.
+                    return;
+                }
+                await Navigation.PushAsync(new EditActionPage(profile, binder, profileService));
             };
-            // TODO tapping cell should have popup to delete it.
-
-            // Need an option to rename the profile
 
             Content = listView;
 
@@ -73,7 +75,18 @@ namespace TeslaTizen.Pages
                     listView.ItemsSource = null;
                     listView.ItemsSource = updatedProfile.Actions;
                     listView.ScrollTo(updatedProfile.Actions.Last(), ScrollToPosition.Center, true);
+                    listView.Header = UIUtil.CreateHeaderLabel(updatedProfile.Name);
                 });
+
+            ToolbarItems.Add(new CircleToolbarItem
+            {
+                Text = "Rename",
+                Icon = new FileImageSource(),
+                Command = new Command(async () =>
+                {
+                    await Navigation.PushModalAsync(new RenameProfilePage(profile, profileService));
+                })
+            });
 
             ActionButton = new ActionButtonItem
             {
